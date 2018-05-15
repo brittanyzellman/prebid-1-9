@@ -3,8 +3,9 @@ import { registerBidder } from 'src/adapters/bidderFactory';
 import * as utils from 'src/utils';
 
 const BIDDER_CODE = 'triplelift';
-const STR_ENDPOINT = document.location.protocol + '//tlx.3lift.com/header/auction?';
-const BID_INDEX = 0;
+const STR_ENDPOINT = document.location.protocol + '//staging-tlx.3lift.com/header/auction?';
+// const STR_ENDPOINT = '//staging-tlx.3lift.com/header/auction?';
+var bid_index = 0;
 var applies = true;
 var consent_string = null;
 
@@ -18,23 +19,15 @@ export const tripleliftAdapterSpec = {
   },
 
   buildRequests: function(bidRequests, bidderRequest) {
-    var inventoryCode = bidRequests[BID_INDEX].params.inventoryCode;
-    var floor = bidRequests[BID_INDEX].params.floor || 0;
     var tlCall = STR_ENDPOINT;
-    var sizes = bidRequests[BID_INDEX].sizes;
     var referrer = utils.getTopWindowUrl();
+    var data = _buildPostBody(bidRequests);
 
     tlCall = utils.tryAppendQueryString(tlCall, 'lib', 'prebid');
     tlCall = utils.tryAppendQueryString(tlCall, 'v', '$prebid.version$');
-    tlCall = utils.tryAppendQueryString(tlCall, 'inv_code', inventoryCode);
-    tlCall = utils.tryAppendQueryString(tlCall, 'floor', floor.toString());
     tlCall = utils.tryAppendQueryString(tlCall, 'fe', _isFlashEnabled().toString());
     tlCall = utils.tryAppendQueryString(tlCall, 'referrer', referrer);
 
-    var sizeQueryString = utils.parseSizesInput(sizes);
-    if (sizeQueryString) {
-      tlCall = utils.tryAppendQueryString(tlCall, 'size', sizeQueryString.join());
-    }
     if (typeof bidderRequest.gdprConsent.gdprApplies !== 'undefined') {
       applies = bidderRequest.gdprConsent.gdprApplies;
       tlCall = utils.tryAppendQueryString(tlCall, 'gdpr', applies.toString());
@@ -49,18 +42,23 @@ export const tripleliftAdapterSpec = {
     utils.logMessage('tlCall request built: ' + tlCall);
 
     return {
-      method: 'GET',
+      method: 'POST',
       url: tlCall,
+      data,
       bidderRequest
     };
   },
 
   interpretResponse: function(serverResponse, {bidderRequest}) {
-    const bidResponses = [];
-    var bids = bidderRequest.bids;
+    var bidResponses = [];
+    var bids = serverResponse.body.bids || [];
 
-    if (serverResponse.body.cpm) {
-      bidResponses.push(_buildResponseObject(serverResponse, bids[BID_INDEX]));
+    // will serverResponse be an object of objects?
+    // bids is an array of objects?
+    if (bids.length > 0) {
+      for (let i = 0; i < bids.length; i++) {
+        bidResponses.push(_buildResponseObject(bidderRequest, bids[i]));
+      }
     }
     return bidResponses;
   },
@@ -81,23 +79,52 @@ export const tripleliftAdapterSpec = {
   }
 }
 
-function _buildResponseObject(serverResponse, bid) {
-  var response = serverResponse.body;
-  var width = response.width;
-  var height = response.height;
-  var dealId = bid.deal_id;
-  var creativeId = bid.crid;
+function _buildPostBody(bidRequests) {
+  var data = {imp: []};
+  var idx = 0;
 
-  if (response.cpm != 0 && response.ad) {
+  for (let i = 0; i < bidRequests.length; i++) {
+    data.imp.push(
+      {
+        id: i,
+        tagid: bidRequests[i].params.inventoryCode,
+        floor: bidRequests[i].params.floor,
+        banner: {
+          format: _sizes(bidRequests[i].sizes),
+        },
+      }
+    )
+  }
+  return data;
+}
+
+function _sizes(sizeArray) {
+  var format = [];
+  for (let i = 0; i < sizeArray.length; i++) {
+    format.push({
+      w: sizeArray[i][0],
+      h: sizeArray[i][1]
+    });
+  }
+  return format;
+}
+
+function _buildResponseObject(bidderRequest, bid) {
+  var width = bid.width || 1;
+  var height = bid.height || 1;
+  var dealId = bid.deal_id || '';
+  var creativeId = bid.imp_id;
+
+  if (bid.cpm != 0 && bid.ad) {
     const bidResponse = {
-      requestId: bid.bidId,
-      cpm: response.cpm,
-      width: width || 1,
-      height: height || 1,
+      requestId: bidderRequest.bids[creativeId].bidId,
+      cpm: bid.cpm,
+      width: width,
+      height: height,
       netRevenue: true,
-      ad: response.ad,
-      creativeId: creativeId || 'tlx',
-      dealId: dealId || '',
+      ad: bid.ad,
+      creativeId: creativeId,
+      dealId: dealId,
       currency: 'USD',
       ttl: 33,
     };
