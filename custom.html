@@ -2,8 +2,11 @@
 <head>
   <!-- Prebid Config Section START -->
   <!-- Make sure this is inserted before your GPT tag -->
+  <script>window.__cmp = {config: {logging: 'debug'}}</script>
+  <script src="//acdn.adnxs.com/cmp/cmp.complete.bundle.js" async></script>
+  
   <script>
-    var PREBID_TIMEOUT = 700;
+    var PREBID_TIMEOUT = 100000;
 
     var adUnits = [{
         code: 'div-gpt-ad-1522123315348-0',
@@ -16,8 +19,8 @@
         {
             bidder: 'triplelift',
             params: {
-               inventoryCode: 'foodgawker',
-               floor: 0
+               inventoryCode: 'forbes_main',
+               floor: 0.000
             }
         },{
             bidder: 'appnexus',
@@ -29,15 +32,15 @@
         code: 'div-gpt-ad-1525796922726-0',
         mediaTypes: {
             banner: {
-                sizes: [[300, 600], [300, 250], [320, 90]],
+                sizes: [[300, 300]],
             }
         },
         bids: [
         {
             bidder: 'triplelift',
             params: {
-               inventoryCode: 'foodgawker',
-               floor: 0
+               inventoryCode: 'forbes_main',
+               floor: 0.00
             }
         },{
             bidder: 'appnexus',
@@ -49,14 +52,14 @@
         code: 'div-gpt-ad-1525797221569-0',
         mediaTypes: {
             banner: {
-                sizes: [[300, 600], [300, 250], [320, 90]],
+                sizes: [[300, 600], [300, 250]],
             }
         },
         bids: [
         {
             bidder: 'triplelift',
             params: {
-               inventoryCode: 'foodgawker',
+               inventoryCode: 'forbes_main',
                floor: 0
             }
         },{
@@ -66,14 +69,15 @@
             }
         }]
     }];
-
+    //
     var pbjs = pbjs || {};
     pbjs.que = pbjs.que || [];
 
+
     // this throws an error becuase enableSendAllBids is not defined
-    pbjs.que.push(function() {
-        pbjs.enableSendAllBids();
-    });
+    // pbjs.que.push(function() {
+    //     pbjs.setConfig({enableSendAllBids});
+    // });
 
   </script>
   <!-- Prebid Config Section END -->
@@ -106,11 +110,11 @@
         if (pbjs.adserverRequestSent) return;
         pbjs.adserverRequestSent = true;
         googletag.cmd.push(function() {
-            pbjs.que.push(function() {
-                pbjs.setTargetingForGPTAsync();
-                googletag.pubads().refresh();
-            });
-        });
+          pbjs.que.push(function() {
+              pbjs.setTargetingForGPTAsync();
+              googletag.pubads().refresh();
+          });
+      });
     }
 
     setTimeout(function() {
@@ -134,11 +138,11 @@
   </script>
 
 <script>
-  googletag.cmd.push(function() {
-    googletag.defineSlot('/22979003/brittany_wendy', [300, 600], 'div-gpt-ad-1522123315348-0').addService(googletag.pubads());
-    googletag.pubads().enableSingleRequest();
-    googletag.enableServices();
-  });
+googletag.cmd.push(function() {
+googletag.defineSlot('/22979003/brittany_wendy', [300, 600], 'div-gpt-ad-1526414433563-0').addService(googletag.pubads());
+googletag.pubads().enableSingleRequest();
+googletag.enableServices();
+});
 </script>
 <script>
   googletag.cmd.push(function() {
@@ -160,9 +164,9 @@
 <h2>Prebid.js Test</h2>
 
 <!-- /22979003/brittany_wendy -->
-<div id='div-gpt-ad-1522123315348-0' style='height:600px; width:300px;'>
+<div id='div-gpt-ad-1526414433563-0' style='height:600px; width:300px;'>
 <script>
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1522123315348-0'); });
+googletag.cmd.push(function() { googletag.display('div-gpt-ad-1526414433563-0'); });
 </script>
 </div>
 <!-- /22979003/prebid_test -->

@@ -3,9 +3,7 @@ import { registerBidder } from 'src/adapters/bidderFactory';
 import * as utils from 'src/utils';
 
 const BIDDER_CODE = 'triplelift';
-const STR_ENDPOINT = document.location.protocol + '//staging-tlx.3lift.com/header/auction?';
-// const STR_ENDPOINT = '//staging-tlx.3lift.com/header/auction?';
-var bid_index = 0;
+const STR_ENDPOINT = document.location.protocol + '//tlx.3lift.com/header/auction?';
 var applies = true;
 var consent_string = null;
 
@@ -53,8 +51,6 @@ export const tripleliftAdapterSpec = {
     var bidResponses = [];
     var bids = serverResponse.body.bids || [];
 
-    // will serverResponse be an object of objects?
-    // bids is an array of objects?
     if (bids.length > 0) {
       for (let i = 0; i < bids.length; i++) {
         bidResponses.push(_buildResponseObject(bidderRequest, bids[i]));
@@ -81,7 +77,6 @@ export const tripleliftAdapterSpec = {
 
 function _buildPostBody(bidRequests) {
   var data = {imp: []};
-  var idx = 0;
 
   for (let i = 0; i < bidRequests.length; i++) {
     data.imp.push(
