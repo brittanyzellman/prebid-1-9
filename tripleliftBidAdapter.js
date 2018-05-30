@@ -58,7 +58,7 @@ export const tripleliftAdapterSpec = {
   },
 
   getUserSyncs: function(syncOptions) {
-    var ibCall = '//ib.3lift.com/userSync.html';
+    var ibCall = '//ib.3lift.com/sync?';
     if (consentString !== null) {
       ibCall = utils.tryAppendQueryString(ibCall, 'gdpr', applies);
       ibCall = utils.tryAppendQueryString(ibCall, 'cmp_cs', consentString);
