@@ -13,7 +13,7 @@ export const tripleliftAdapterSpec = {
   supportedMediaTypes: [BANNER],
   aliases: ['triplelift'],
   isBidRequestValid: function(bid) {
-    return bid.params.inventoryCode !== 'undefined';
+    return (typeof bid.params.inventoryCode !== 'undefined');
   },
 
   buildRequests: function(bidRequests, bidderRequest) {
@@ -27,11 +27,11 @@ export const tripleliftAdapterSpec = {
     tlCall = utils.tryAppendQueryString(tlCall, 'referrer', referrer);
 
     if (bidderRequest && bidderRequest.gdprConsent) {
-      if (bidderRequest.gdprConsent.gdprApplies !== 'undefined') {
+      if (typeof bidderRequest.gdprConsent.gdprApplies !== 'undefined') {
         applies = bidderRequest.gdprConsent.gdprApplies;
         tlCall = utils.tryAppendQueryString(tlCall, 'gdpr', applies.toString());
       }
-      if (bidderRequest.gdprConsent.consentString !== 'undefined') {
+      if (typeof bidderRequest.gdprConsent.consentString !== 'undefined') {
         consentString = bidderRequest.gdprConsent.consentString;
         tlCall = utils.tryAppendQueryString(tlCall, 'cmp_cs', consentString);
       }
