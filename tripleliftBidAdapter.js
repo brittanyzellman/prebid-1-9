@@ -4,32 +4,34 @@ import * as utils from 'src/utils';
 
 const BIDDER_CODE = 'triplelift';
 const STR_ENDPOINT = document.location.protocol + '//tlx.3lift.com/header/auction?';
-var applies = true;
-var consentString = null;
+let gdprApplies = true;
+let consentString = null;
 
 export const tripleliftAdapterSpec = {
 
   code: BIDDER_CODE,
   supportedMediaTypes: [BANNER],
-  aliases: ['triplelift'],
   isBidRequestValid: function(bid) {
     return (typeof bid.params.inventoryCode !== 'undefined');
   },
 
   buildRequests: function(bidRequests, bidderRequest) {
-    var tlCall = STR_ENDPOINT;
-    var referrer = utils.getTopWindowUrl();
-    var data = _buildPostBody(bidRequests);
+    let tlCall = STR_ENDPOINT;
+    let referrer = utils.getTopWindowUrl();
+    let data = _buildPostBody(bidRequests);
 
     tlCall = utils.tryAppendQueryString(tlCall, 'lib', 'prebid');
     tlCall = utils.tryAppendQueryString(tlCall, 'v', '$prebid.version$');
-    tlCall = utils.tryAppendQueryString(tlCall, 'fe', _isFlashEnabled().toString());
     tlCall = utils.tryAppendQueryString(tlCall, 'referrer', referrer);
+
+    if (bidderRequest && bidderRequest.timeout) {
+      tlCall = utils.tryAppendQueryString(tlCall, 'tmax', bidderRequest.timeout);
+    }
 
     if (bidderRequest && bidderRequest.gdprConsent) {
       if (typeof bidderRequest.gdprConsent.gdprApplies !== 'undefined') {
-        applies = bidderRequest.gdprConsent.gdprApplies;
-        tlCall = utils.tryAppendQueryString(tlCall, 'gdpr', applies.toString());
+        gdprApplies = bidderRequest.gdprConsent.gdprApplies;
+        tlCall = utils.tryAppendQueryString(tlCall, 'gdpr', gdprApplies.toString());
       }
       if (typeof bidderRequest.gdprConsent.consentString !== 'undefined') {
         consentString = bidderRequest.gdprConsent.consentString;
@@ -51,16 +53,16 @@ export const tripleliftAdapterSpec = {
   },
 
   interpretResponse: function(serverResponse, {bidderRequest}) {
-    var bids = serverResponse.body.bids || [];
+    let bids = serverResponse.body.bids || [];
     return bids.map(function(bid) {
       return _buildResponseObject(bidderRequest, bid);
     });
   },
 
   getUserSyncs: function(syncOptions) {
-    var ibCall = '//ib.3lift.com/sync?';
+    let ibCall = '//ib.3lift.com/sync?';
     if (consentString !== null) {
-      ibCall = utils.tryAppendQueryString(ibCall, 'gdpr', applies);
+      ibCall = utils.tryAppendQueryString(ibCall, 'gdpr', gdprApplies);
       ibCall = utils.tryAppendQueryString(ibCall, 'cmp_cs', consentString);
     }
 
@@ -74,7 +76,7 @@ export const tripleliftAdapterSpec = {
 }
 
 function _buildPostBody(bidRequests) {
-  var data = {};
+  let data = {};
   data.imp = bidRequests.map(function(bid, index) {
     return {
       id: index,
@@ -90,7 +92,8 @@ function _buildPostBody(bidRequests) {
 }
 
 function _sizes(sizeArray) {
-  return sizeArray.map(function(size) {
+  let sizes = sizeArray.filter(_isValidSize);
+  return sizes.map(function(size) {
     return {
       w: size[0],
       h: size[1]
@@ -98,12 +101,16 @@ function _sizes(sizeArray) {
   });
 }
 
+function _isValidSize(size) {
+  return (size.length === 2 && typeof size[0] === 'number' && typeof size[1] === 'number');
+}
+
 function _buildResponseObject(bidderRequest, bid) {
-  var bidResponse = {};
-  var width = bid.width || 1;
-  var height = bid.height || 1;
-  var dealId = bid.deal_id || '';
-  var creativeId = bid.imp_id;
+  let bidResponse = {};
+  let width = bid.width || 1;
+  let height = bid.height || 1;
+  let dealId = bid.deal_id || '';
+  let creativeId = bid.imp_id;
 
   if (bid.cpm != 0 && bid.ad) {
     bidResponse = {
@@ -120,21 +127,6 @@ function _buildResponseObject(bidderRequest, bid) {
     };
   };
   return bidResponse;
-}
-
-function _isFlashEnabled() {
-  var hasFlash = 0;
-  try {
-    var fo = new window.ActiveXObject('ShockwaveFlash.ShockwaveFlash');
-    if (fo) { hasFlash = 1; }
-  } catch (e) {
-    if (navigator.mimeTypes &&
-      navigator.mimeTypes['application/x-shockwave-flash'] !== undefined &&
-      navigator.mimeTypes['application/x-shockwave-flash'].enabledPlugin) {
-      hasFlash = 1;
-    }
-  }
-  return hasFlash;
 }
 
 registerBidder(tripleliftAdapterSpec);
